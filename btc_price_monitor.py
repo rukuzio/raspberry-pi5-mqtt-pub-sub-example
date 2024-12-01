@@ -15,8 +15,6 @@ websocket_url = "wss://push.coinmarketcap.com/ws?device=web&client_source=home_p
 webhook_url = "https://fastwebhooks.com/mqtt"
 crypto_ids = "1"  # ID of the cryptocurrency to monitor (e.g., Bitcoin)
 
-# Bearer token for webhook (if required)
-auth_token = "your_bearer_token_here"  # Replace with your actual token
 headers = {
     "Authorization": auth,
     "Content-Type": "application/json",
