@@ -3,7 +3,12 @@ import paho.mqtt.client as mqtt
 import requests
 import json
 from dotenv import load_dotenv
+import warnings
 
+# Suppress Deprecation Warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+# Load environment variables
 load_dotenv()
 auth = os.getenv("BEARER")
 
@@ -12,48 +17,50 @@ broker = "localhost"
 port = 1883
 topic = "raspberrypi/system_health"
 
-
 # Webhook URL
 webhook_url = "https://fastwebhooks.com/mqtt"
+headers = {"Authorization": auth}
 
-headers = {
-"Authorization": auth
-}
+# Define callback functions
+def handle_connect(client, userdata, flags, rc):
+    if rc == 0:
+        print("Connected to MQTT broker")
+        client.subscribe(topic)
+    else:
+        print(f"Failed to connect, return code {rc}")
 
+def handle_disconnect(client, userdata, rc):
+    print("Disconnected from MQTT broker")
+    if rc != 0:
+        print("Unexpected disconnection. Reconnecting...")
+        client.reconnect()
 
-def on_message(client, userdata, message):
-    raw_payload = message.payload.decode()  # Decode the raw message
+def handle_message(client, userdata, message):
+    raw_payload = message.payload.decode()
     print(f"Message received: {raw_payload}")
 
     try:
-        # If payload is not JSON, convert it
-        if raw_payload.startswith("{") and raw_payload.endswith("}"):
-            # Attempt to parse as JSON
-            print(f"Raw MQTT payload: {message.payload}")
-            payload = json.loads(raw_payload.replace("'", "\""))  # Convert single to double quotes if necessary
-        else:
-            print("Payload is not JSON-formatted.")
-            return
-
-        # Forward the message to the webhook
+        payload = json.loads(raw_payload)
+        print(f"Parsed payload: {payload}")
         response = requests.post(webhook_url, headers=headers, json=payload)
         print(f"Webhook response: {response.status_code}, {response.text}")
-
-    except json.JSONDecodeError as e:
-        print(f"JSON decode error: {e}")
+    except json.JSONDecodeError:
+        print(f"Invalid JSON payload: {raw_payload}")
     except Exception as e:
-        print(f"Raw MQTT payload: {message.payload}")
         print(f"Error forwarding to webhook: {e}")
 
-# Initialize the MQTT client
+# Initialize MQTT client
 client = mqtt.Client()
-client.on_message = on_message
+client.on_connect = handle_connect
+client.on_disconnect = handle_disconnect
+client.on_message = handle_message
 
-# Connect and subscribe
+# Connect and start the loop
 try:
     client.connect(broker, port)
-    client.subscribe(topic)
-    print(f"Subscribed to topic {topic}")
-    client.loop_forever()  # Block and listen for messages
+    client.loop_forever()
+except KeyboardInterrupt:
+    print("Stopping MQTT client...")
+    client.disconnect()
 except Exception as e:
     print(f"Error: {e}")

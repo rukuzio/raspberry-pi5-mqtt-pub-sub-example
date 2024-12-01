@@ -42,7 +42,7 @@ def get_network_metrics():
     }
 
 # Initialize MQTT Client
-client = mqtt.Client()
+client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 client.connect(broker, port)
 
 try:
@@ -59,8 +59,8 @@ try:
         # Publish metrics as JSON
         client.publish(topic, json.dumps(metrics))
         
-        # Wait for 10 minutes
-        time.sleep(600)  # 600 seconds (10 minutes)
+        # Wait for n minutes
+        time.sleep(600)  # in seconds
 except KeyboardInterrupt:
     print("Script stopped by user.")
 except Exception as e:
