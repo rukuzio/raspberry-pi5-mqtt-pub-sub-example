@@ -8,11 +8,11 @@ import requests
 
 # Load environment variables
 load_dotenv()
-auth = os.getenv("BEARER")
+auth = os.getenv("BTC_FEED_JWT")
 
 # WebSocket and Webhook configurations
 websocket_url = "wss://push.coinmarketcap.com/ws?device=web&client_source=home_page"
-webhook_url = "https://fastwebhooks.com/mqtt"
+webhook_url = "https://fastwebhooks.com/cmc-btc-price-feed"
 crypto_ids = "1"  # ID of the cryptocurrency to monitor (e.g., Bitcoin)
 
 headers = {
@@ -87,7 +87,7 @@ def send_to_webhook():
         else:
             print("No data available to send to webhook yet.")
         
-        time.sleep(15)
+        time.sleep(60)
 
 
 # Main function to start WebSocket and webhook threads
